@@ -1,39 +1,36 @@
 /**
- * אבחון רמת AI — אוסף תשובות לגיליון המשוב
- * מרכז הרכב שמעון ברזילי
+ * אבחון רמת AI — מרכז הרכב שמעון ברזילי
+ * מקבל כל אבחון שמושלם מדף הנחיתה ומוסיף אותו כשורה בגיליון המשוב.
  *
- * הסקריפט הזה יושב בתוך גיליון המשוב (Extensions → Apps Script),
- * ומקבל כל אבחון שמושלם בדף ומוסיף אותו כשורה חדשה.
- * מדריך הקמה מלא: ראו SETUP-DRIVE.md
+ * התקנה (מפורט ב-SETUP-DRIVE.md):
+ * 1. פותחים את גיליון "משוב אבחון AI" בדרייב.
+ * 2. Extensions ▸ Apps Script, מדביקים את הקוד הזה ושומרים.
+ * 3. Deploy ▸ New deployment ▸ Web app ▸ Execute as: Me ▸ Who has access: Anyone.
+ * 4. מעתיקים את כתובת ה-/exec ומדביקים ב-SUBMIT_URL שבתוך index.html.
  */
-
-// שם הלשונית שאליה נכתבות התשובות
-var SHEET_NAME = 'תשובות';
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {
-    lock.waitLock(20000); // מונע דריסה כששניים שולחים באותו רגע
-
+    lock.waitLock(30000);
     var data = JSON.parse(e.postData.contents);
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sh = ss.getSheetByName(SHEET_NAME) || ss.insertSheet(SHEET_NAME);
 
-    // כותרות דינמיות: מוסיף עמודה לכל מפתח חדש שמגיע
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sh = ss.getSheetByName('תשובות') || ss.getSheets()[0];
+
+    // כותרות: יוצרים/מרחיבים לפי המפתחות שמגיעים
     var lastCol = sh.getLastColumn();
     var headers = lastCol > 0 ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
-    var changed = false;
     Object.keys(data).forEach(function (k) {
-      if (headers.indexOf(k) === -1) { headers.push(k); changed = true; }
+      if (headers.indexOf(k) === -1) {
+        headers.push(k);
+        sh.getRange(1, headers.length).setValue(k);
+      }
     });
-    if (changed) {
-      sh.getRange(1, 1, 1, headers.length).setValues([headers]);
-      sh.setFrozenRows(1);
-    }
 
     var row = headers.map(function (h) {
       var v = data[h];
-      return (v === null || v === undefined) ? '' : v;
+      return (v === undefined || v === null) ? '' : v;
     });
     sh.appendRow(row);
 
@@ -45,9 +42,8 @@ function doPost(e) {
   }
 }
 
-// בדיקה מהירה שהשירות חי — פתחו את כתובת ה-Web App בדפדפן
 function doGet() {
-  return json({ ok: true, message: 'AI diagnostic collector is live' });
+  return ContentService.createTextOutput('AI diagnostic collector — OK');
 }
 
 function json(obj) {
