@@ -124,9 +124,11 @@ header .logo{height:clamp(32px,4.4vw,42px);width:auto;aspect-ratio:998/184;filte
 .jmascot{position:absolute;top:50%;left:50%;z-index:3;width:min(42vh,340px);aspect-ratio:883/962;transform:translate(-50%,-50%) scale(.35);
   background:url("assets/mascot.png") center/contain no-repeat;filter:drop-shadow(0 0 30px rgba(42,214,255,.5)) drop-shadow(0 14px 24px rgba(0,0,0,.55));will-change:transform}
 .jcopy{position:absolute;z-index:4;right:clamp(20px,7vw,110px);top:50%;transform:translateY(-50%);max-width:min(42ch,44vw);pointer-events:none}
-@media(max-width:820px){.jcopy{right:0;left:0;text-align:center;top:auto;bottom:8%;transform:none;max-width:100%;padding:0 22px}}
+@media(max-width:820px){.jcopy{position:static;transform:none;max-width:100%;padding:0 22px;text-align:center;margin-top:8px}}
 .jstep{position:absolute;inset:0;opacity:0;transition:opacity .4s var(--ease),transform .5s var(--ease);transform:translateY(16px)}
-@media(max-width:820px){.jstep{position:relative}}
+.anec{font-style:italic;color:var(--muted);font-size:clamp(.9rem,1.6vw,1rem);line-height:1.5;margin-top:16px;max-width:40ch;border-inline-start:2px solid var(--cyan);padding-inline-start:13px}
+@media(max-width:820px){.anec{border:0;padding:0;margin-inline:auto;text-align:center}.jstep p{margin-inline:auto}}
+@media(max-width:820px){.jstep{position:relative;opacity:1;transform:none;margin-bottom:34px}.jstep:last-child{margin-bottom:0}}
 .jstep.on{opacity:1;transform:none;position:relative}
 .jstep .num{font-family:var(--mono);font-size:.78rem;color:var(--cyan);letter-spacing:.14em}
 .jstep h3{font-weight:900;font-size:clamp(1.7rem,4vw,2.8rem);line-height:1.04;margin:12px 0 14px;letter-spacing:-.03em;text-wrap:balance}
@@ -298,8 +300,8 @@ input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;bac
   .h-copy p.sub{margin-inline:auto}.h-actions,.h-meta{justify-content:center}.h-meta .m{text-align:center}
   .stage{order:-1;width:min(72%,330px)}
   .scroll-hint{display:none}.hero{min-height:auto;padding-top:130px}
-  .journey{height:auto}.jsticky{position:relative;height:auto;min-height:auto;padding:80px 0;flex-direction:column;gap:30px}
-  .jmascot{position:relative;transform:none!important;width:min(56%,240px);top:auto;left:auto}
+  .journey{height:auto}.jsticky{position:relative;height:auto;min-height:auto;padding:64px 0 44px;flex-direction:column;gap:8px}
+  .jmascot{position:relative;transform:none!important;width:min(58%,220px);top:auto;left:auto;margin:0 auto;display:block}
   .jcity,.jportal{display:none}
 }
 @media(max-width:560px){.opts.cols2{grid-template-columns:1fr}.sv-nav .hint{display:none}}
@@ -373,17 +375,20 @@ input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;bac
       <div class="jstep on" data-i="0">
         <span class="num">// 01 · נקודת ההמראה</span>
         <h3>ה-AI כבר טס קדימה. השאלה היא איפה אתה ביחס אליו</h3>
-        <p>חלק מהצוות כבר בפנים, חלק עוד על הקרקע — וזה בסדר. בלי מדידה אי אפשר לשפר, אז נתחיל באבחון קצר וכן.</p>
+        <p>חלק מהצוות כבר בפנים, חלק עוד על הקרקע — וזה בסדר גמור. בלי מדידה אי אפשר לשפר, אז נתחיל באבחון קצר וכן.</p>
+        <p class="anec">מכונאי ותיק אצלנו צחק כששמע "ChatGPT". שבוע אחרי הוא ניסח איתו הצעת מחיר בשתי דקות — והיום הוא זה שמלמד את השאר.</p>
       </div>
       <div class="jstep" data-i="1">
         <span class="num">// 02 · מהירות האור</span>
         <h3>סורקים ידע אמיתי — מהבסיס ועד המתקדם</h3>
         <p>לא רק "כמה אתה מרגיש". שאלות ידע ברמות שונות, כדי שנבין בדיוק מה כבר ביד שלך ומה כדאי ללמד בקורס.</p>
+        <p class="anec">רובנו בטוחים שאנחנו "לא טכנולוגיים". ואז נזכרים שאנחנו כבר שנים כותבים הודעות וואטסאפ מושלמות — זה בדיוק אותו שריר.</p>
       </div>
       <div class="jstep" data-i="2">
         <span class="num">// 03 · העיר החדשה</span>
         <h3>נוחתים עם ציון מוכנות אישי — וקו בסיס להשוואה</h3>
         <p>בסוף האבחון תדע בדיוק איפה אתה היום. שומרים את התוצאה, ובסוף הקורס מודדים שוב כמה קדמת.</p>
+        <p class="anec">העובד שהכי חשש סיים את הקורס הראשון עם הציון הכי גבוה. כי פחד, בסוף, זה רק סקרנות שעוד לא יצאה לדרך.</p>
       </div>
     </div>
     <div class="jhud"><span>אבחון · <b id="jhudPct">00</b>%</span><span class="track"><i id="jhudBar"></i></span><span id="jhudLbl">INIT</span></div>
@@ -399,10 +404,10 @@ input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;bac
       <p class="reveal d2">כל שאלה מזינה מדד — ומתרגמת בסוף לציון מוכנות אישי.</p>
     </div>
     <div class="cards">
-      <div class="card reveal d1"><div class="ic">🧠</div><div class="k">DIM · 01</div><h4>ידע</h4><p>עד כמה המושגים והכללים של עולם ה-AI כבר מוכרים לך — נמדד בשאלות אמת.</p></div>
-      <div class="card reveal d2"><div class="ic">🛠️</div><div class="k">DIM · 02</div><h4>ניסיון</h4><p>כמה כלים כבר נגעת בהם, ואילו משימות אתה יודע לבצע בעצמך.</p></div>
-      <div class="card reveal d3"><div class="ic">🎯</div><div class="k">DIM · 03</div><h4>צרכים</h4><p>איפה בדיוק AI יכול להסיר לך עומס — בתפקיד ובמשימות שלך.</p></div>
-      <div class="card reveal d4"><div class="ic">🚀</div><div class="k">DIM · 04</div><h4>מוכנות</h4><p>הביטחון, המוטיבציה והפתיחות שלך לצאת לדרך.</p></div>
+      <div class="card reveal d1"><div class="ic">🧠</div><div class="k">DIM · 01</div><h4>ידע</h4><p>עד כמה המושגים כבר מוכרים לך — נמדד בשאלות אמת. (ו"הזיה" זה לא רק מה שקורה בפקק באוגוסט.)</p></div>
+      <div class="card reveal d2"><div class="ic">🛠️</div><div class="k">DIM · 02</div><h4>ניסיון</h4><p>כמה כלים כבר נגעת בהם. גם "שאלתי פעם משהו וזרקתי" נחשב התחלה מכובדת.</p></div>
+      <div class="card reveal d3"><div class="ic">🎯</div><div class="k">DIM · 03</div><h4>צרכים</h4><p>איפה AI יסיר לך עומס — כל דבר שגרם לך פעם למלמל "חייב להיות לזה קיצור".</p></div>
+      <div class="card reveal d4"><div class="ic">🚀</div><div class="k">DIM · 04</div><h4>מוכנות</h4><p>הביטחון, המוטיבציה והפתיחות. "סקרן אבל חשדן" זה, אגב, מקום מצוין להתחיל ממנו.</p></div>
     </div>
   </div>
 </section>
@@ -410,9 +415,9 @@ input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;bac
 <!-- CTA -->
 <section class="block" style="padding-top:0">
   <div class="cta"><div class="glow"></div><div class="inner">
-    <span class="eyebrow reveal" style="color:#ff9a9e"><span class="dot"></span>מוכן להתחיל</span>
+    <span class="eyebrow reveal"><span class="dot"></span>מוכן להתחיל</span>
     <h2 class="reveal d1">כמה נקודות מוכנות תצבור?</h2>
-    <p class="reveal d2">כמה דקות, אפס ידע מוקדם נדרש, ובסוף — ציון מוכנות אישי. יחידת האבחון שלנו מלווה אותך כל הדרך.</p>
+    <p class="reveal d2">אפילו מי שנשבע שהוא "לא בקטע של מחשבים" יוצא מזה עם חיוך — וציון. כמה דקות, אפס ידע מוקדם נדרש, ויחידת האבחון שלנו לצידך כל הדרך.</p>
     <button class="btn btn-lg reveal d2" data-magnet data-start><span class="lbl">הפעל אבחון <span>←</span></span></button>
     <div class="mini reveal d3">התוצאות נאספות אצלנו כדי לבנות לכם קורס מדויק · אין צורך בשם משתמש או סיסמה</div>
   </div></div>
@@ -513,6 +518,7 @@ const jLabels=['INIT','LIGHTSPEED','ARRIVAL'];
 let jp=0,jticking=false;
 function jRender(){
   jticking=false;
+  if(innerWidth<=820){jhudBar&&(jhudBar.style.width="100%");return;}
   const rect=journey.getBoundingClientRect();const total=journey.offsetHeight-innerHeight;
   let p=total>0?(-rect.top)/total:0;p=Math.max(0,Math.min(1,p));jp=p;
   /* warp accelerates toward the middle, eases at arrival */
