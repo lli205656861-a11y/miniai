@@ -12,7 +12,7 @@
 
 var SHEET_ID = '16RJdyAhl83WWhIRusFsdZAouTrqnP47sT9AjfOmfE40'; // גיליון "משוב אבחון AI"
 var COURSE_FOLDER_ID = '1k99wtjGCUYui_GOTeAH7lXExf66TSZMA'; // תיקיית הקורס בדרייב
-var EMPLOYEES_ROOT_NAME = 'עובדי הקורס — אבחון AI';
+var EMPLOYEES_ROOT_ID = '1WBMvGbY374Kn9xjV524sIimiRpSeWkR8'; // תיקיית "עובדים" שיצרת
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
@@ -52,8 +52,7 @@ function saveToEmployeeFolder_(ss, data, certB64) {
   var name = ((data['שם'] || '').toString().trim()) || 'ללא שם';
   var safe = name.replace(/[\\\/\[\]\*\?:<>|"]/g, ' ').replace(/\s+/g, ' ').trim() || 'ללא שם';
 
-  var courseFolder = DriveApp.getFolderById(COURSE_FOLDER_ID);
-  var root = getOrCreateFolder_(courseFolder, EMPLOYEES_ROOT_NAME);
+  var root = DriveApp.getFolderById(EMPLOYEES_ROOT_ID);
   var emp = getOrCreateFolder_(root, safe);
 
   // מסמך אבחון אישי (מתוארך)
@@ -98,7 +97,7 @@ function moveToFolder_(fileId, folder) {
  * זה נדרש כי הרשאות מצטברות — אישור דרך doGet לא מבקש הרשאות שאין בו.
  */
 function setup() {
-  DriveApp.getFolderById(COURSE_FOLDER_ID).getName();
+  DriveApp.getFolderById(EMPLOYEES_ROOT_ID).getName();
   var d = DocumentApp.create('אישור הרשאות — נא למחוק');
   DriveApp.getFileById(d.getId()).setTrashed(true);
   return 'authorized';
