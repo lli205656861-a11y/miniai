@@ -136,6 +136,13 @@ header .who .cd{font-family:var(--mono);font-size:.68rem;color:var(--muted)}
 .s-body{display:none;padding:0 20px 20px;border-top:1px solid var(--line)}
 .session.open .s-body{display:block;animation:fade .3s var(--ease)}
 .s-body .summary{color:var(--ink-2);margin:16px 0}
+.found-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.found-grid{grid-template-columns:1fr}}
+.found{display:flex;gap:12px;padding:13px 15px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(160deg,rgba(42,214,255,.05),transparent)}
+.found .fn{width:26px;height:26px;flex:none;border-radius:8px;background:var(--cyan-soft);border:1px solid rgba(42,214,255,.3);color:var(--cyan);font-family:var(--display);font-weight:900;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.found .ft{font-weight:800;font-size:.98rem;margin-bottom:3px}
+.found .fd{color:var(--muted);font-size:.9rem;line-height:1.45}
+.sync-chip{font-family:var(--mono);font-size:.64rem;color:var(--muted);border:1px solid var(--line);padding:6px 10px;border-radius:100px;white-space:nowrap}
 .block{margin-top:16px}
 .block .bt{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--cyan);text-transform:uppercase;margin-bottom:10px}
 .mat-list{display:flex;flex-direction:column;gap:8px}
@@ -221,6 +228,7 @@ footer .logo{height:30px;margin:0 auto 12px;opacity:.8}
     <div class="who">
       <div style="text-align:end"><div class="nm" id="hName">—</div><div class="cd mono" id="hCode">—</div></div>
       <div class="av" id="hAv">?</div>
+      <span class="sync-chip" id="syncStatus">💾 מקומי</span>
       <button class="logout" id="hLogout">יציאה</button>
     </div>
   </header>
@@ -297,21 +305,32 @@ const COURSE = {
   totalSessions: 6,
   sessions: [
     {
-      n:1, title:'מפגש 1 · הכירו את ה-AI ככלי עבודה', date:'', released:true,
-      summary:'מה זה בכלל AI, איך "מדברים" איתו נכון, והשימושים הראשונים שחוסכים זמן כבר מהיום הראשון.',
+      n:1, title:'מפגש 1 · איך בכלל עובדים עם AI — הנחות יסוד', date:'', released:true,
+      summary:'לפני הכלים והטריקים — המנטליות. איך "חושבים" נכון על AI, מה מותר לצפות ממנו, ואיך מפיקים ממנו את המקסימום בבטחה. אחרי המפגש הזה כל השאר יזרום.',
+      foundations:[
+        {t:'AI הוא עוזר — לא מקור אמת', d:'הוא מנסח נהדר, אבל לפעמים "ממציא" עובדות שנשמעות בטוחות (הזיה). על מספרים, מחירים ועובדות — תמיד בודקים.'},
+        {t:'אתה המנהל, הוא העובד החדש', d:'תחשוב עליו כעובד חדש ומבריק שלא מכיר את העסק. ככל שתסביר בבירור מה אתה רוצה — כך יבצע טוב יותר. הוא לא קורא מחשבות.'},
+        {t:'זו שיחה, לא כפתור', d:'לא חייבים לפגוע בול בפעם הראשונה. אפשר לתקן תוך כדי: "קצר יותר", "בטון מנומס", "תן 3 גרסאות". ממשיכים עד שטוב.'},
+        {t:'הקשר = איכות', d:'מי אתה, למי זה מיועד, מה המטרה, ובאיזה פורמט. כמה מילות הקשר משדרגות דרמטית את התוצאה.'},
+        {t:'הוא לא מחובר למערכות שלנו', d:'הוא לא יודע את המלאי, המחירים או פרטי הלקוחות שלנו — אלא אם נדביק לו את המידע. לנתונים פנימיים אל תסתמך עליו.'},
+        {t:'פרטיות לפני הכול', d:'לא מדביקים ת"ז, טלפונים או פרטים מזהים של לקוחות לצ׳אט ציבורי. מנסחים בכללי.'},
+        {t:'החתימה הסופית שלך', d:'לפני ששולחים ללקוח או מגישים — עוברים ומאשרים. הידע המקצועי והאחריות הם שלך; ה-AI רק חוסך לך את העבודה השחורה.'},
+      ],
       materials:[
         {ic:'🎬', label:'הקלטת המפגש', url:'#'},
         {ic:'📊', label:'מצגת המפגש', url:'#'},
-        {ic:'📄', label:'דף מושגי יסוד (PDF)', url:'#'},
+        {ic:'📄', label:'דף "7 הנחות היסוד" להדפסה (PDF)', url:'#'},
+        {ic:'🔗', label:'פתיחת חשבון ChatGPT', url:'https://chat.openai.com'},
       ],
       exercises:[
-        'פתחו חשבון ChatGPT/Gemini ונסו שיחה ראשונה.',
-        'בקשו מה-AI לנסח הודעת שירות ללקוח — והשוו לניסוח שלכם.',
-        'כתבו פרומפט אחד עם הקשר + דוגמה, ותראו את ההבדל בתוצאה.',
+        'נסו את אותה בקשה פעמיים: פעם במשפט קצר, ופעם עם הקשר + דוגמה. שימו לב להבדל בתוצאה.',
+        'קחו הודעה אמיתית שכתבתם השבוע, ובקשו מ-AI לשפר את הנוסח — בלי לשנות את המשמעות.',
+        'בקשו מה-AI להסביר מושג מקצועי ברכב ללקוח שלא מבין — ובדקו את הדיוק (הנחת יסוד #1).',
       ],
       tips:[
-        'ככל שתיתנו יותר הקשר ודוגמה — התשובה תהיה מדויקת יותר.',
-        'אל תדביקו פרטים אישיים של לקוחות לצ׳אט ציבורי.',
+        'פתיחה טובה לפרומפט נותנת לו תפקיד: "אתה עוזר שירות במרכז רכב. נסח...".',
+        'לא מרוצה? אל תתחיל מחדש — כתוב "שכתב את זה קצר ומנומס יותר".',
+        'בקש תמיד 2-3 גרסאות ובחר את הטובה — מהיר יותר מלכתוב לבד.',
       ],
     },
     {n:2, title:'מפגש 2 · ניסוח, סיכומים ומענה ללקוחות', date:'', released:false},
@@ -329,6 +348,24 @@ const COURSE = {
     {cat:'תרגול', label:'אתגר 5 הדקות', note:'כל יום — משימה אחת שגוזלת זמן, תנו ל-AI לעשות אותה.', tip:true},
   ],
 };
+
+/* ---------- cloud sync (Apps Script) ---------- */
+const SUBMIT_URL = "https://script.google.com/macros/s/AKfycbxStGee63fVx0EcL1c6aLpDwJRLdcW56CfZ0dA3mMl7uCJdIz852uyeJxCwtvslzrfQMg/exec";
+let _syncT;
+function setSync(t){var e=document.getElementById("syncStatus");if(e)e.textContent=t;}
+function cloudSaveDebounced(){clearTimeout(_syncT);_syncT=setTimeout(cloudSave,1200);}
+function cloudSave(){ if(!SUBMIT_URL||!auth)return; LS.set(key("ts"),Date.now());
+  var payload={type:"course",code:auth.code,name:auth.name,total:COURSE.totalSessions,progress:prog(),notes:LS.get(key("notes"),""),ts:LS.get(key("ts"),Date.now())};
+  setSync("☁️ מסנכרן…");
+  fetch(SUBMIT_URL,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(payload)}).then(function(){setSync("☁️ מסונכרן");}).catch(function(){setSync("💾 מקומי");}); }
+async function cloudLoad(){ if(!SUBMIT_URL||!auth)return false;
+  try{ var ctrl=new AbortController(); var to=setTimeout(function(){ctrl.abort();},5000);
+    var r=await fetch(SUBMIT_URL+"?action=course&code="+encodeURIComponent(auth.code),{signal:ctrl.signal}); clearTimeout(to);
+    var d=await r.json();
+    if(d&&d.ok&&d.found){ var lt=LS.get(key("ts"),0);
+      if((d.ts||0)>=lt){ if(d.progress)saveProgLocal(d.progress); if(typeof d.notes==="string")LS.set(key("notes"),d.notes); LS.set(key("ts"),d.ts||Date.now()); return true; } } }
+  catch(e){}
+  return false; }
 
 /* ---------- storage helpers ---------- */
 const LS = {
@@ -373,6 +410,8 @@ function enterHub(){
   document.getElementById('wGreet').textContent='שלום '+auth.name+' 👋';
   document.getElementById('mCode').textContent=auth.code;
   renderSessions(); renderResources(); renderDiag(); loadNotes(); refreshProgress();
+  setSync(SUBMIT_URL?"☁️ מסונכרן":"💾 מקומי");
+  cloudLoad().then(function(changed){ if(changed){ renderSessions(); refreshProgress(); var ta=document.getElementById("notes"); if(ta)ta.value=LS.get(key("notes"),"")||""; } });
 }
 
 /* tabs */
@@ -385,7 +424,8 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
 
 /* progress state */
 function prog(){ return LS.get(key('progress'), {sessions:[], exercises:[]}); }
-function saveProg(p){ LS.set(key('progress'), p); }
+function saveProgLocal(p){ LS.set(key('progress'), p); }
+function saveProg(p){ saveProgLocal(p); cloudSaveDebounced(); }
 
 function renderSessions(){
   const tl=document.getElementById('timeline'); const p=prog();
@@ -399,6 +439,7 @@ function renderSessions(){
     if(s.released){
       body='<div class="s-body">';
       body+='<div class="summary">'+(s.summary||'')+'</div>';
+      if(s.foundations&&s.foundations.length){ body+='<div class="block"><div class="bt">🧭 הנחות יסוד · איך עובדים עם AI</div><div class="found-grid">'+s.foundations.map((f,i)=>`<div class="found"><div class="fn">${i+1}</div><div><div class="ft">${f.t}</div><div class="fd">${f.d}</div></div></div>`).join('')+'</div></div>'; }
       if(s.materials&&s.materials.length){ body+='<div class="block"><div class="bt">📚 חומרי המפגש</div><div class="mat-list">'+s.materials.map(m=>`<a class="mat" href="${m.url}" target="_blank" rel="noopener"><span class="ic">${m.ic||'🔗'}</span><span>${m.label}</span><span class="go">פתח ←</span></a>`).join('')+'</div></div>'; }
       if(s.exercises&&s.exercises.length){ body+='<div class="block"><div class="bt">🎯 תרגולים</div><div class="ex-list">'+s.exercises.map((x,i)=>{const id=s.n+'.'+i;const ed=p.exercises.includes(id);return `<div class="ex ${ed?'done':''}" data-ex="${id}"><span class="box"></span><span class="txt">${x}</span></div>`;}).join('')+'</div></div>'; }
       if(s.tips&&s.tips.length){ body+='<div class="block"><div class="bt">💡 טיפים</div><div class="tips-list">'+s.tips.map(t=>`<div class="tip"><span class="b">◆</span><span>${t}</span></div>`).join('')+'</div></div>'; }
@@ -464,7 +505,7 @@ function renderDiag(){
 /* notes */
 function loadNotes(){
   const ta=document.getElementById('notes'); ta.value=LS.get(key('notes'),'')||'';
-  let t; ta.addEventListener('input',()=>{ clearTimeout(t); document.getElementById('notesHint').textContent='כותב...'; t=setTimeout(()=>{ LS.set(key('notes'),ta.value); document.getElementById('notesHint').textContent='נשמר ✓ · '+new Date().toLocaleTimeString('he-IL'); },500); });
+  let t; ta.addEventListener('input',()=>{ clearTimeout(t); document.getElementById('notesHint').textContent='כותב...'; t=setTimeout(()=>{ LS.set(key('notes'),ta.value); cloudSaveDebounced(); document.getElementById('notesHint').textContent='נשמר ✓ · '+new Date().toLocaleTimeString('he-IL'); },500); });
 }
 
 /* resources */

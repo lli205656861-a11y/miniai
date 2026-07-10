@@ -20,6 +20,8 @@ function doPost(e) {
     lock.waitLock(30000);
     var data = JSON.parse(e.postData.contents);
 
+    if (data.type === 'course') return handleCourse_(data); // סנכרון מרחב הקורס
+
     // התעודה (base64) — נשמרת כקובץ, לא כתא בגיליון
     var certB64 = data['__cert_png'];
     delete data['__cert_png'];
@@ -103,5 +105,50 @@ function setup() {
   return 'authorized';
 }
 
-function doGet() { return ContentService.createTextOutput('AI diagnostic collector — OK'); }
+function doGet(e) {
+  if (e && e.parameter && e.parameter.action === 'course' && e.parameter.code) {
+    try {
+      var ss = SpreadsheetApp.openById(SHEET_ID);
+      var sh = ss.getSheetByName('מעקב קורס');
+      if (!sh) return json({ ok: true, found: false });
+      var v = sh.getDataRange().getValues();
+      for (var i = 1; i < v.length; i++) {
+        if (String(v[i][0]) === String(e.parameter.code)) {
+          return json({ ok: true, found: true,
+            progress: {
+              sessions: String(v[i][2] || '').split(',').filter(Boolean).map(Number),
+              exercises: String(v[i][3] || '').split(',').filter(Boolean)
+            },
+            notes: v[i][5] || '', ts: v[i][7] || 0 });
+        }
+      }
+      return json({ ok: true, found: false });
+    } catch (err) { return json({ ok: false, error: String(err) }); }
+  }
+  return ContentService.createTextOutput('AI diagnostic collector — OK');
+}
+
+// סנכרון התקדמות/הערות של משתתף לטאב "מעקב קורס" (שורה אחת לכל קוד)
+function handleCourse_(data) {
+  var lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(30000);
+    var ss = SpreadsheetApp.openById(SHEET_ID);
+    var sh = ss.getSheetByName('מעקב קורס');
+    if (!sh) { sh = ss.insertSheet('מעקב קורס');
+      sh.appendRow(['קוד','שם','מפגשים_שהושלמו','תרגולים_שהושלמו','אחוז','הערות','עודכן','ts']); }
+    var sess = (data.progress && data.progress.sessions) || [];
+    var exs  = (data.progress && data.progress.exercises) || [];
+    var total = data.total || 6;
+    var pct = Math.round(sess.length / total * 100) + '%';
+    var row = [data.code||'', data.name||'', sess.join(','), exs.join(','), pct, data.notes||'', new Date(), data.ts||Date.now()];
+    var codes = sh.getLastRow() > 1 ? sh.getRange(2,1,sh.getLastRow()-1,1).getValues() : [];
+    var found = -1;
+    for (var i=0;i<codes.length;i++){ if(String(codes[i][0])===String(data.code)){ found=i+2; break; } }
+    if (found>0) sh.getRange(found,1,1,row.length).setValues([row]);
+    else sh.appendRow(row);
+    return json({ ok: true });
+  } catch (err) { return json({ ok: false, error: String(err) }); }
+  finally { try { lock.releaseLock(); } catch(e2){} }
+}
 function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
