@@ -30,3 +30,4 @@
   דרגה ב-`klevel` (`basic`/`inter`/`adv`), והתשובה הנכונה ב-`correct:true`.
 - **הציון והרמות** — הלוגיקה ב-`computeIndex` / `knowledge`, והרמות במערך `LEVELS`.
 - **ה-Scrollytelling** — אפקט מהירות-האור מצויר ב-Canvas (`makeWarp`) ומונע-גלילה ב-`jRender`.
+- **תעודה + תיק עובד** — כל אבחון מפיק תעודה מעוצבת (Canvas) שנשמרת בתיק העובד בדרייב. התהליך המלא מתועד ב-`WORKFLOW.md`.

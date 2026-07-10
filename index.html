@@ -288,6 +288,9 @@ input[type=range]::-moz-range-thumb{width:32px;height:32px;border-radius:50%;bac
 .send-status{text-align:center;margin-top:20px;font-family:var(--mono);font-size:.8rem;color:var(--muted);min-height:1.3em;transition:.3s}
 .send-status.ok{color:var(--cyan)}.send-status.err{color:var(--red-2)}
 .result-actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px}
+.cert-shot{position:relative;max-width:760px;margin:0 auto 24px;min-height:120px}
+.cert-img{width:100%;display:block;border-radius:16px;border:1px solid var(--line-2);box-shadow:var(--shadow)}
+.cert-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.8rem;color:var(--muted);border:1px dashed var(--line-2);border-radius:16px}
 .result-again{text-align:center;margin-top:18px}
 .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface-2);color:#fff;border:1px solid var(--line-2);padding:14px 24px;border-radius:100px;font-weight:600;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.35s var(--ease);z-index:400}
 .toast.show{opacity:1;transform:translateX(-50%)}
@@ -722,6 +725,7 @@ function finish(){finished=true;svBar.style.width='100%';svCount.textContent='�
   <div class="result">
     <div class="rhead"><span class="eyebrow"><span class="dot"></span>אבחון הושלם</span>
       <h2>${name?name+', ':''}הנה קו הבסיס שלך</h2><p>שמור אותו — נשווה אליו בסוף הקורס.</p></div>
+    <div class="cert-shot"><div class="cert-hint" id="certHint">מכינים את התעודה…</div><img id="certImg" class="cert-img" alt="תעודת מוכנות AI" style="display:none"></div>
     <div class="cert">
       <div class="cert-top"><span>תו תקן AI · דוח אבחון</span><span class="ok"><span class="led"></span>APPROVED</span></div>
       <div class="cert-body">
@@ -752,7 +756,8 @@ function finish(){finished=true;svBar.style.width='100%';svCount.textContent='�
     <div class="result-actions">
       <button class="btn-next" id="sendBtn" style="background:var(--ink)">שלח שוב למרכז ✉️</button>
       <button class="btn-back" id="copyBtn" style="border:1.5px solid var(--line-2)">העתק סיכום</button>
-      <button class="btn-back" id="dlBtn" style="border:1.5px solid var(--line-2)">הורד כקובץ</button>
+      <button class="btn-back" id="dlBtn" style="border:1.5px solid var(--line-2)">הורד סיכום</button>
+      <button class="btn-next" id="certBtn" style="background:var(--ink)" disabled>⬇︎ הורד תעודה</button>
     </div>
     <div class="result-again"><button class="btn-back" id="againBtn">↺ הפעל אבחון מחדש</button></div>
   </div>`;
@@ -764,16 +769,62 @@ function finish(){finished=true;svBar.style.width='100%';svCount.textContent='�
   const record=buildRecord(r,L,li,code,dateStr);
   const summary=buildSummary(record);
   const st=document.getElementById('sendStatus');
-  /* auto-submit to Drive (Apps Script) */
-  if(SUBMIT_URL){st.textContent='· שולח את התוצאה למרכז…';
-    submitToDrive(record).then(ok=>{st.textContent=ok?'✓ התוצאה נשלחה למרכז ונשמרה':'⚠ לא הצלחנו לשלוח אוטומטית — אפשר לשלוח במייל למטה';st.className='send-status '+(ok?'ok':'err');});
-  }else{st.textContent='';}
+  /* render the designed certificate, then auto-submit (image included) */
+  const certData={name:(record['שם']||'עובד/ת'),index:r.index,levelNum:li+1,levelName:L.n,knowledge:r.knowledge,exp:r.exp,ready:r.ready,code:code,date:dateStr};
+  const certBtn=document.getElementById('certBtn');
+  function doSubmit(){ if(!SUBMIT_URL){st.textContent='';return;} st.textContent='· שולח את התוצאה והתעודה למרכז…';
+    submitToDrive(record).then(ok=>{st.textContent=ok?'✓ התוצאה והתעודה נשמרו בתיק העובד':'⚠ לא הצלחנו לשלוח אוטומטית — אפשר לשלוח במייל למטה';st.className='send-status '+(ok?'ok':'err');}); }
+  renderCertificate(certData).then(url=>{
+    const img=document.getElementById('certImg'),hint=document.getElementById('certHint');
+    if(img){img.src=url;img.style.display='block';} if(hint)hint.remove();
+    if(certBtn){certBtn.disabled=false;certBtn.addEventListener('click',()=>{const a=document.createElement('a');a.href=url;a.download='תעודת-AI-'+certData.name+'.png';a.click();toast('התעודה ירדה ✓');});}
+    record['__cert_png']=url.split(',')[1];
+    doSubmit();
+  }).catch(()=>{ const hint=document.getElementById('certHint'); if(hint)hint.textContent='לא ניתן היה לצייר תעודה'; doSubmit(); });
 
   document.getElementById('sendBtn').addEventListener('click',()=>{location.href=`mailto:${OWNER_EMAIL}?subject=${encodeURIComponent(`אבחון AI — ${name||'עובד/ת'} · ציון ${r.index} · ${L.n}`)}&body=${encodeURIComponent(summary)}`;});
   document.getElementById('copyBtn').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(summary);toast('הסיכום הועתק ✓');}catch{toast('לא ניתן להעתיק — נסה הורדה');}});
   document.getElementById('dlBtn').addEventListener('click',()=>{const blob=new Blob([summary],{type:'text/plain;charset=utf-8'});const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=`אבחון-AI-${name||'עובד'}.txt`;a.click();URL.revokeObjectURL(u);toast('הקובץ ירד ✓');});
   document.getElementById('againBtn').addEventListener('click',()=>{finished=false;idx=0;for(const k in answers)delete answers[k];svNav.style.display='flex';render();});}
 
+function assetURL(varName,fallback){try{var v=getComputedStyle(document.documentElement).getPropertyValue(varName).trim();var m=v.match(/url\((['"]?)(.*?)\1\)/);return m&&m[2]?m[2]:fallback;}catch(e){return fallback;}}
+const MASCOT_SRC=assetURL('--_masc','assets/mascot.png'),LOGO_SRC=assetURL('--_logo','assets/logo.png');
+const _imgCache={};
+function loadImg(src){return new Promise(res=>{if(_imgCache[src])return res(_imgCache[src]);const i=new Image();i.onload=()=>{_imgCache[src]=i;res(i);};i.onerror=()=>res(null);i.src=src;});}
+function _rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+async function renderCertificate(d){
+  const W=1600,H=1160,cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d');
+  try{await document.fonts.ready;}catch(e){}
+  const logo=await loadImg(LOGO_SRC),masc=await loadImg(MASCOT_SRC);
+  const g=ctx.createLinearGradient(0,0,W,H);g.addColorStop(0,'#0a0f24');g.addColorStop(1,'#0c1330');ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  let rg=ctx.createRadialGradient(W/2,H*0.26,60,W/2,H*0.26,W*0.72);rg.addColorStop(0,'rgba(42,214,255,.18)');rg.addColorStop(1,'rgba(42,214,255,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  rg=ctx.createRadialGradient(W*0.86,H*0.92,40,W*0.86,H*0.92,W*0.6);rg.addColorStop(0,'rgba(139,92,255,.16)');rg.addColorStop(1,'rgba(139,92,255,0)');ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(42,214,255,.55)';ctx.lineWidth=2.5;_rr(ctx,46,46,W-92,H-92,26);ctx.stroke();
+  ctx.strokeStyle='rgba(150,180,255,.18)';ctx.lineWidth=1;_rr(ctx,64,64,W-128,H-128,20);ctx.stroke();
+  ctx.strokeStyle='rgba(42,214,255,.9)';ctx.lineWidth=3;const cl=48;
+  [[84,84,1,1],[W-84,84,-1,1],[84,H-84,1,-1],[W-84,H-84,-1,-1]].forEach(function(c){ctx.beginPath();ctx.moveTo(c[0],c[1]+c[3]*cl);ctx.lineTo(c[0],c[1]);ctx.lineTo(c[0]+c[2]*cl,c[1]);ctx.stroke();});
+  ctx.textAlign='center';ctx.direction='rtl';
+  if(logo){const lw=360,lh=lw*logo.height/logo.width;ctx.drawImage(logo,(W-lw)/2,118,lw,lh);}
+  ctx.fillStyle='#66e2ff';ctx.font='600 22px "Heebo",sans-serif';ctx.fillText('·  AI READINESS CERTIFICATE  ·  תעודת אבחון  ·',W/2,272);
+  ctx.fillStyle='#ffffff';ctx.font='800 66px "Rubik",sans-serif';ctx.fillText('תעודת מוכנות AI',W/2,352);
+  ctx.strokeStyle='rgba(42,214,255,.6)';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(W/2-70,392);ctx.lineTo(W/2+70,392);ctx.stroke();
+  ctx.fillStyle='#9fb0d8';ctx.font='400 26px "Heebo",sans-serif';ctx.fillText('מוענקת בזאת ל־',W/2,456);
+  ctx.fillStyle='#ffffff';ctx.font='700 54px "Rubik",sans-serif';ctx.shadowColor='rgba(42,214,255,.5)';ctx.shadowBlur=24;ctx.fillText(d.name||'—',W/2,520);ctx.shadowBlur=0;
+  const cx=W/2,cy=724,rad=104;
+  ctx.lineWidth=18;ctx.strokeStyle='rgba(150,180,255,.14)';ctx.beginPath();ctx.arc(cx,cy,rad,0,Math.PI*2);ctx.stroke();
+  const ga=ctx.createLinearGradient(cx-rad,cy-rad,cx+rad,cy+rad);ga.addColorStop(0,'#2ad6ff');ga.addColorStop(1,'#8b5cff');
+  ctx.strokeStyle=ga;ctx.lineCap='round';ctx.beginPath();ctx.arc(cx,cy,rad,-Math.PI/2,-Math.PI/2+Math.PI*2*(Math.max(0,Math.min(100,d.index))/100));ctx.stroke();ctx.lineCap='butt';
+  ctx.fillStyle='#ffffff';ctx.font='800 76px "Rubik",sans-serif';ctx.textBaseline='middle';ctx.fillText(String(d.index),cx,cy-4);
+  ctx.textBaseline='alphabetic';ctx.fillStyle='#8ea0c8';ctx.font='500 20px "Heebo",sans-serif';ctx.fillText('/ 100  ·  מדד מוכנות',cx,cy+54);
+  ctx.fillStyle='#ffffff';ctx.font='800 40px "Rubik",sans-serif';ctx.fillText('רמה '+d.levelNum+'  ·  '+d.levelName,W/2,902);
+  ctx.fillStyle='#9fb0d8';ctx.font='500 24px "Heebo",sans-serif';ctx.fillText('ידע '+d.knowledge+'%    ·    ניסיון '+d.exp+'%    ·    מוכנות '+d.ready+'%',W/2,948);
+  if(masc){const mw=196,mh=mw*masc.height/masc.width;ctx.save();ctx.translate(206,H-158);ctx.rotate(-0.12);ctx.shadowColor='rgba(255,51,70,.45)';ctx.shadowBlur=30;ctx.drawImage(masc,-mw/2,-mh/2,mw,mh);ctx.restore();}
+  ctx.fillStyle='#cfd8f0';ctx.font='600 26px "Rubik",sans-serif';ctx.fillText('מרכז הרכב שמעון ברזילי',W-330,H-150);
+  ctx.strokeStyle='rgba(150,180,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W-470,H-128);ctx.lineTo(W-190,H-128);ctx.stroke();
+  ctx.fillStyle='#7e8ab6';ctx.font='500 18px "Heebo",sans-serif';ctx.fillText('חתימה רשמית  ·  תו תקן AI',W-330,H-102);
+  ctx.fillStyle='#66e2ff';ctx.font='500 20px "Heebo",sans-serif';ctx.fillText('מזהה '+d.code+'    ·    '+d.date,W/2,H-98);
+  return cv.toDataURL('image/png');
+}
 function buildRecord(r,L,li,code,dateStr){const k=r.kdet;const rec={
   'חותמת_זמן':new Date().toISOString(),'תאריך':dateStr,'מזהה_אבחון':code,
   'שם':(answers.name||'').trim(),'תפקיד':answers.role||'',
