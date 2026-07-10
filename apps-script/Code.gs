@@ -10,6 +10,7 @@
  * כדי לשמור על אותה כתובת /exec. בפעם הראשונה אשר הרשאות דרייב.
  */
 
+var SHEET_ID = '16RJdyAhl83WWhIRusFsdZAouTrqnP47sT9AjfOmfE40'; // גיליון "משוב אבחון AI"
 var EMPLOYEES_ROOT_NAME = 'עובדי הקורס — אבחון AI';
 
 function doPost(e) {
@@ -23,7 +24,7 @@ function doPost(e) {
     delete data['__cert_png'];
 
     // (1) גיליון מרכזי
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = SpreadsheetApp.openById(SHEET_ID);
     var sh = ss.getSheetByName('תשובות') || ss.getSheets()[0];
     var lastCol = sh.getLastColumn();
     var headers = lastCol > 0 ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
