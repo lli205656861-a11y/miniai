@@ -11,6 +11,7 @@
  */
 
 var SHEET_ID = '16RJdyAhl83WWhIRusFsdZAouTrqnP47sT9AjfOmfE40'; // גיליון "משוב אבחון AI"
+var COURSE_FOLDER_ID = '1k99wtjGCUYui_GOTeAH7lXExf66TSZMA'; // תיקיית הקורס בדרייב
 var EMPLOYEES_ROOT_NAME = 'עובדי הקורס — אבחון AI';
 
 function doPost(e) {
@@ -49,7 +50,7 @@ function saveToEmployeeFolder_(ss, data, certB64) {
   var name = ((data['שם'] || '').toString().trim()) || 'ללא שם';
   var safe = name.replace(/[\\\/\[\]\*\?:<>|"]/g, ' ').replace(/\s+/g, ' ').trim() || 'ללא שם';
 
-  var courseFolder = DriveApp.getFileById(ss.getId()).getParents().next();
+  var courseFolder = DriveApp.getFolderById(COURSE_FOLDER_ID);
   var root = getOrCreateFolder_(courseFolder, EMPLOYEES_ROOT_NAME);
   var emp = getOrCreateFolder_(root, safe);
 
@@ -90,5 +91,16 @@ function moveToFolder_(fileId, folder) {
   folder.addFile(f);
   try { DriveApp.getRootFolder().removeFile(f); } catch (e) {}
 }
+/**
+ * הרץ פעם אחת מהעורך (Run ▸ setup) כדי לאשר את הרשאות Drive + Docs.
+ * זה נדרש כי הרשאות מצטברות — אישור דרך doGet לא מבקש הרשאות שאין בו.
+ */
+function setup() {
+  DriveApp.getFolderById(COURSE_FOLDER_ID).getName();
+  var d = DocumentApp.create('אישור הרשאות — נא למחוק');
+  DriveApp.getFileById(d.getId()).setTrashed(true);
+  return 'authorized';
+}
+
 function doGet() { return ContentService.createTextOutput('AI diagnostic collector — OK'); }
 function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
