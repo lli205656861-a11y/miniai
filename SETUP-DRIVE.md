@@ -61,3 +61,12 @@ const SUBMIT_URL = "https://script.google.com/macros/s/XXXXXXXX/exec";
 שהרשאות Drive/Docs לא אושרו (אישור דרך `doGet` לא מספיק, כי הוא לא משתמש בהן).
 **הפתרון:** בעורך בחר את הפונקציה **`setup`** ▸ **Run ▶** ▸ אשר את ההרשאות (Allow).
 ההרשאה נשמרת ברמת החשבון — הפריסה הקיימת תתחיל לעבוד מיד, בלי redeploy.
+
+---
+
+## אם עדיין מופיע `folder_error ... permission ... /auth/drive`
+צריך להצהיר על ההרשאות במפורש ב-manifest:
+1. ⚙️ **Project Settings** ▸ סמן **"Show "appsscript.json" manifest file in editor"**.
+2. פתח את `appsscript.json` והחלף בתוכן מ-`apps-script/appsscript.json` (כולל `oauthScopes`).
+3. שמור ▸ **Run ▸ `setup` ▸ Allow** (עכשיו החלון יבקש במפורש גם Drive וגם Docs).
+4. **Deploy ▸ New deployment** (או Manage deployments ▸ New version) ▸ העתק את הכתובת.
