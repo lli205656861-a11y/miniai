@@ -24,8 +24,14 @@ function doPost(e) {
     var certB64 = data['__cert_png'];
     delete data['__cert_png'];
 
-    // (1) גיליון מרכזי
     var ss = SpreadsheetApp.openById(SHEET_ID);
+
+    // (2)+(3) תיק עובד — רץ קודם כדי לרשום את התוצאה/השגיאה לגיליון
+    var info = '';
+    try { info = saveToEmployeeFolder_(ss, data, certB64); } catch (fe) { info = 'folder_error: ' + String(fe); }
+    data['_תיקייה'] = info;
+
+    // (1) גיליון מרכזי
     var sh = ss.getSheetByName('תשובות') || ss.getSheets()[0];
     var lastCol = sh.getLastColumn();
     var headers = lastCol > 0 ? sh.getRange(1, 1, 1, lastCol).getValues()[0] : [];
@@ -33,10 +39,6 @@ function doPost(e) {
       if (headers.indexOf(k) === -1) { headers.push(k); sh.getRange(1, headers.length).setValue(k); }
     });
     sh.appendRow(headers.map(function (h) { return data[h] == null ? '' : data[h]; }));
-
-    // (2)+(3) תיק עובד: תיקייה + מסמך + תעודה
-    var info = '';
-    try { info = saveToEmployeeFolder_(ss, data, certB64); } catch (fe) { info = 'folder_error: ' + fe; }
 
     return json({ ok: true, folder: info });
   } catch (err) {
