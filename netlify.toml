@@ -1,0 +1,9 @@
+# Netlify — אתר סטטי, ללא שלב build. מפרסם את שורש הריפו.
+[build]
+  publish = "."
+  command = ""
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
