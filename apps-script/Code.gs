@@ -14,6 +14,9 @@ var SHEET_ID = '16RJdyAhl83WWhIRusFsdZAouTrqnP47sT9AjfOmfE40'; // גיליון "
 var COURSE_FOLDER_ID = '1k99wtjGCUYui_GOTeAH7lXExf66TSZMA'; // תיקיית הקורס בדרייב
 var EMPLOYEES_ROOT_ID = '1WBMvGbY374Kn9xjV524sIimiRpSeWkR8'; // תיקיית "עובדים" שיצרת
 
+// סיסמת סביבת הניהול (admin.html). שַׁנֵּה לערך פרטי — נבדקת רק בשרת, לא נחשפת בקוד הדף.
+var MANAGER_PW = 'ברזילי-ניהול-2026';
+
 function doPost(e) {
   var lock = LockService.getScriptLock();
   try {
@@ -21,6 +24,12 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
 
     if (data.type === 'course') return handleCourse_(data); // סנכרון מרחב הקורס
+
+    if (data.type === 'release') { // שליטת מנהל בחשיפת מפגשים
+      if (String(data.pw || '') !== MANAGER_PW) return json({ ok: false, error: 'unauthorized' });
+      setReleased_(data.released || {});
+      return json({ ok: true, released: getReleased_() });
+    }
 
     // התעודה (base64) — נשמרת כקובץ, לא כתא בגיליון
     var certB64 = data['__cert_png'];
@@ -106,6 +115,22 @@ function setup() {
 }
 
 function doGet(e) {
+  var action = e && e.parameter ? e.parameter.action : '';
+
+  // מצב חשיפת המפגשים — נצרך ע"י מרחב הקורס בכל טעינה (לא רגיש, ללא סיסמה)
+  if (action === 'release') {
+    try { return json({ ok: true, released: getReleased_() }); }
+    catch (err) { return json({ ok: false, error: String(err) }); }
+  }
+
+  // נתוני סביבת הניהול — מוגן בסיסמה שנבדקת בשרת
+  if (action === 'admin') {
+    try {
+      if (String(e.parameter.pw || '') !== MANAGER_PW) return json({ ok: false, error: 'unauthorized' });
+      return json(adminData_());
+    } catch (err) { return json({ ok: false, error: String(err) }); }
+  }
+
   if (e && e.parameter && e.parameter.action === 'course' && e.parameter.code) {
     try {
       var ss = SpreadsheetApp.openById(SHEET_ID);
@@ -151,4 +176,74 @@ function handleCourse_(data) {
   } catch (err) { return json({ ok: false, error: String(err) }); }
   finally { try { lock.releaseLock(); } catch(e2){} }
 }
+/* ===== סביבת ניהול ===== */
+
+// מצב חשיפת המפגשים נשמר ב-Script Properties (ברירת מחדל: מפגש 1 פתוח).
+function getReleased_() {
+  var raw = PropertiesService.getScriptProperties().getProperty('RELEASED');
+  if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+  return { '1': true, '2': false, '3': false, '4': false, '5': false, '6': false };
+}
+function setReleased_(map) {
+  var cur = getReleased_();
+  Object.keys(map).forEach(function (k) { cur[String(k)] = !!map[k]; });
+  PropertiesService.getScriptProperties().setProperty('RELEASED', JSON.stringify(cur));
+}
+
+// איחוד גיליון האבחון + טאב "מעקב קורס" לרשומת-על אחת לכל עובד (מפתח: שם).
+function adminData_() {
+  var ss = SpreadsheetApp.openById(SHEET_ID);
+
+  // (א) אבחונים
+  var dsh = ss.getSheetByName('תשובות') || ss.getSheets()[0];
+  var dv = (dsh && dsh.getLastRow() > 1) ? dsh.getDataRange().getValues() : [];
+  var dh = dv.length ? dv[0] : [];
+  function col(n) { return dh.indexOf(n); }
+  var ci = { name: col('שם'), role: col('תפקיד'), id: col('מזהה_אבחון'), date: col('תאריך'),
+    ts: col('חותמת_זמן'), index: col('מדד_מוכנות'), level: col('רמה'), kn: col('ידע_אחוז'),
+    exp: col('ניסיון_אחוז'), ready: col('מוכנות_אחוז'), folder: col('_תיקייה') };
+  var byName = {};
+  for (var i = 1; i < dv.length; i++) {
+    var r = dv[i]; var nm = String(ci.name >= 0 ? r[ci.name] : '').trim(); if (!nm) continue;
+    var rec = { id: val(r, ci.id), date: val(r, ci.date), ts: String(val(r, ci.ts)),
+      index: num(val(r, ci.index)), level: val(r, ci.level), kn: num(val(r, ci.kn)),
+      exp: num(val(r, ci.exp)), ready: num(val(r, ci.ready)), folder: val(r, ci.folder) };
+    if (!byName[nm]) byName[nm] = { name: nm, role: val(r, ci.role), diags: [] };
+    byName[nm].diags.push(rec);
+  }
+
+  // (ב) מעקב קורס
+  var courseByName = {};
+  var csh = ss.getSheetByName('מעקב קורס');
+  if (csh && csh.getLastRow() > 1) {
+    var cv = csh.getDataRange().getValues();
+    for (var j = 1; j < cv.length; j++) {
+      var cr = cv[j]; var cnm = String(cr[1] || '').trim();
+      var obj = { code: cr[0], sessions: String(cr[2] || '').split(',').filter(String),
+        exercises: String(cr[3] || '').split(',').filter(String), pct: cr[4],
+        notes: cr[5], updated: cr[6] ? new Date(cr[6]).toISOString() : '', ts: cr[7] };
+      if (cnm) courseByName[cnm] = obj;
+    }
+  }
+
+  // (ג) איחוד
+  var emps = [];
+  Object.keys(byName).forEach(function (nm) {
+    var e = byName[nm];
+    e.diags.sort(function (a, b) { return String(a.ts).localeCompare(String(b.ts)); });
+    e.first = e.diags[0]; e.last = e.diags[e.diags.length - 1];
+    e.course = courseByName[nm] || null;
+    delete courseByName[nm];
+    emps.push(e);
+  });
+  // משתתפים שנרשמו לקורס אך ללא אבחון תואם בשם
+  Object.keys(courseByName).forEach(function (nm) {
+    emps.push({ name: nm, role: '', diags: [], first: null, last: null, course: courseByName[nm] });
+  });
+
+  return { ok: true, employees: emps, released: getReleased_(), generated: new Date().toISOString() };
+}
+function val(r, i) { return (i >= 0 && i < r.length) ? r[i] : ''; }
+function num(x) { var n = parseFloat(String(x).replace(/[^\d.\-]/g, '')); return isNaN(n) ? null : n; }
+
 function json(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }

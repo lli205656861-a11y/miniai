@@ -412,7 +412,16 @@ function enterHub(){
   renderSessions(); renderResources(); renderDiag(); loadNotes(); refreshProgress();
   setSync(SUBMIT_URL?"☁️ מסונכרן":"💾 מקומי");
   cloudLoad().then(function(changed){ if(changed){ renderSessions(); refreshProgress(); var ta=document.getElementById("notes"); if(ta)ta.value=LS.get(key("notes"),"")||""; } });
+  loadReleaseState().then(function(changed){ if(changed){ renderSessions(); refreshProgress(); } });
 }
+// מצב חשיפת המפגשים נשלט מסביבת הניהול; נמשך מהשרת ודורס את ברירת המחדל שבקוד.
+function loadReleaseState(){ if(!SUBMIT_URL) return Promise.resolve(false);
+  return fetch(SUBMIT_URL+"?action=release").then(function(r){return r.json();}).then(function(d){
+    if(!d||!d.ok||!d.released) return false; var changed=false;
+    COURSE.sessions.forEach(function(s){ var v=d.released[String(s.n)];
+      if(v!==undefined && !!v!==!!s.released){ s.released=!!v; changed=true; } });
+    return changed;
+  }).catch(function(){ return false; }); }
 
 /* tabs */
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
